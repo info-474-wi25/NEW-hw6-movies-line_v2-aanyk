@@ -62,13 +62,17 @@ d3.csv("movies.csv").then(data => {
 // 6: ADD AXES
 svgLine.append("g")
     .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(xScale).tickFormat(d3.format("d"))); // Year format
+    .call(d3.axisBottom(xScale) // Use xScale instead of xLine
+        .tickFormat(d3.format("d")) // Format years correctly
+    );
 
 svgLine.append("g")
-    .call(d3.axisLeft(yScale)
-        .ticks(5)  // Controls the number of ticks displayed
-        .tickFormat(d => `${(d / 1_000_000_000).toFixed(1)}B`) // Converts to billions with 1 decimal
+    .call(d3.axisLeft(yScale) // Use yScale instead of yLine
+        .tickValues(d3.range(0, d3.max(lineData, d => d.totalGross), 1_000_000_000)) // Force 1B increments
+        .tickFormat(d => `${d / 1_000_000_000}B`) // Format in billions
     );
+
+
 
 
     // 7: ADD LABELS
