@@ -4,7 +4,6 @@ const margin = { top: 50, right: 30, bottom: 60, left: 70 },
       height = 400 - margin.top - margin.bottom;
 
 // 1: CREATE SVG CONTAINERS
-// 1: Line Chart Container
 const svgLine = d3.select("#lineChart")
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
@@ -13,21 +12,18 @@ const svgLine = d3.select("#lineChart")
 d3.csv("movies.csv").then(data => {
     // 2.a: Reformat Data
     data.forEach(d => {
-        d.score = +d.imdb_score;   // Convert score to a number
-        d.year = +d.title_year;    // Convert year to a number
+        d.score = +d.imdb_score;
+        d.year = +d.title_year;
         d.director = d.director_name;
-        d.gross = +d.gross;        // Convert gross to a number
+        d.gross = d.gross ? +d.gross : 0; // Handle missing values
     });
 
     console.log(data);
 
-    /* ===================== LINE CHART: Total Gross by Year ===================== */
-
     // 3: PREPARE LINE CHART DATA (Total Gross by Year)
-    // 3.a: Filter out entries with null or 0 gross and missing year
-    const validData = data.filter(d => !isNaN(d.gross) && d.gross > 0 && d.year);
+    const validData = data.filter(d => !isNaN(d.gross) && d.gross > 0 && d.year >= 2010);
 
-    // 3.b: Group by year and summarize (aggregate gross by year)
+    // 3.b: Group by year and summarize
     const aggregated = d3.rollup(validData,
         v => d3.sum(v, d => d.gross),
         d => d.year
@@ -39,18 +35,16 @@ d3.csv("movies.csv").then(data => {
 
     console.log(lineData);
 
-    // 4: SET SCALES FOR LINE CHART
-    // 4.a: X scale (Year)
+    // 4: SET SCALES
     const xScale = d3.scaleLinear()
-        .domain(d3.extent(lineData, d => d.year))
+        .domain([2010, d3.max(lineData, d => d.year)])
         .range([0, width]);
-    
-    // 4.b: Y scale (Gross)
+
     const yScale = d3.scaleLinear()
         .domain([0, d3.max(lineData, d => d.totalGross)])
         .range([height, 0]);
 
-    // 4.c: Define line generator for plotting line
+    // 4.c: Define line generator
     const lineGenerator = d3.line()
         .x(d => xScale(d.year))
         .y(d => yScale(d.totalGross));
@@ -63,36 +57,35 @@ d3.csv("movies.csv").then(data => {
         .attr("stroke-width", 2)
         .attr("d", lineGenerator);
 
-    // 6: ADD AXES FOR LINE CHART
-    // 6.a: X-axis (Year)
-    svgLine.append("g")
-        .attr("transform", `translate(0,${height})`)
-        .call(d3.axisBottom(xScale).tickFormat(d3.format("d")));
-    
-    // 6.b: Y-axis (Gross)
-    svgLine.append("g")
-        .call(d3.axisLeft(yScale));
+// 6: ADD AXES
+svgLine.append("g")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(xScale).tickFormat(d3.format("d"))); // Year format
 
-    // 7: ADD LABELS FOR LINE CHART
-    // 7.a: Chart Title
+svgLine.append("g")
+    .call(d3.axisLeft(yScale)
+        .ticks(5)  // Controls the number of ticks displayed
+        .tickFormat(d => `${(d / 1_000_000_000).toFixed(1)}B`) // Converts to billions with 1 decimal
+    );
+
+
+    // 7: ADD LABELS
     svgLine.append("text")
         .attr("x", width / 2)
         .attr("y", -margin.top / 2)
         .attr("class", "title")
-        .text("Total Gross by Year");
+        .text("Trends in Total Gross Revenue");
 
-    // 7.b: X-axis label (Year)
     svgLine.append("text")
         .attr("x", width / 2)
         .attr("y", height + margin.bottom - 10)
         .attr("class", "axis-label")
         .text("Year");
 
-    // 7.c: Y-axis label (Total Gross)
     svgLine.append("text")
         .attr("transform", "rotate(-90)")
         .attr("x", -height / 2)
         .attr("y", -margin.left + 20)
         .attr("class", "axis-label")
-        .text("Total Gross");
+        .text("Total Gross Revenue (Billions)");
 });
