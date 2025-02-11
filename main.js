@@ -59,14 +59,14 @@ d3.csv("movies.csv").then(data => {
         .attr("stroke-width", 2)
         .attr("d", lineGenerator);
 
-// 6: ADD AXES
-svgLine.append("g")
-    .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(xScale) // Use xScale instead of xLine
-        .tickFormat(d3.format("d")) // Format years correctly
-    );
+    // 6: ADD AXES
+    svgLine.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale) // Use xScale instead of xLine
+            .tickFormat(d3.format("d")) // Format years correctly
+        );
 
-svgLine.append("g")
+    svgLine.append("g")
     .call(d3.axisLeft(yScale) // Use yScale instead of yLine
         .tickValues(d3.range(0, d3.max(lineData, d => d.totalGross), 1_000_000_000)) // Force 1B increments
         .tickFormat(d => `${d / 1_000_000_000}B`) // Format in billions
